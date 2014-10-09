@@ -17,10 +17,10 @@ Source
 
 The Paho C client is stored in a git repository. The URLs to access it are:
 
-ssh://<username>@git.eclipse.org:29418/paho/org.eclipse.paho.mqtt.c
-https://<username>@git.eclipse.org/r/paho/org.eclipse.paho.mqtt.c
+- ssh://<username>@git.eclipse.org:29418/paho/org.eclipse.paho.mqtt-sn.apps
+- https://<username>@git.eclipse.org/r/paho/org.eclipse.paho.mqtt-sn.apps
 
-A [web browsable repository](http://git.eclipse.org/c/paho/org.eclipse.paho.mqtt.c.git) is available.
+A [web browsable repository](http://git.eclipse.org/c/paho/org.eclipse.paho.mqtt-sn.apps.git) is available.
 
 Contributing a patch
 --------------------
