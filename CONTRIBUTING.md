@@ -15,7 +15,7 @@ Paho reflects the inherent physical and cost constraints of device connectivity.
 Source
 ------
 
-The Paho C client is stored in a git repository. The URLs to access it are:
+The MQTT-SN applications and samples are stored in a git repository. The URLs to access it are:
 
 - ssh://<username>@git.eclipse.org:29418/paho/org.eclipse.paho.mqtt-sn.apps
 - https://<username>@git.eclipse.org/r/paho/org.eclipse.paho.mqtt-sn.apps
