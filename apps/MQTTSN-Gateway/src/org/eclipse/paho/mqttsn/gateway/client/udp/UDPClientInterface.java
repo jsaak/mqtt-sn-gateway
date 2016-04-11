@@ -153,92 +153,100 @@ public class UDPClientInterface implements ClientInterface, Runnable {
 	public void readMsg() {
 		DatagramPacket packet = new DatagramPacket(recData,0, recData.length);
 		try {
-			packet.setLength(recData.length);
+			// packet.setLength(recData.length); why we set it twice, and why it throws java.lang.ArrayIndexOutOfBoundsException????????????????
 			udpSocket.receive(packet);
 
-			//add the forwarder from which we received the message to the list
-			//if it is already on the list just update its timeout
-			Forwarder forw = new Forwarder();
-			forw.addr = packet.getAddress();
-			forw.port = packet.getPort();
-			forw.timeout = System.currentTimeMillis() + GWParameters.getForwarderTimeout()*1000;
-			//GatewayLogger.log(GatewayLogger.INFO, "UDPClientInterface -  New forwarder:addr = " + forw.addr+ " port = "+forw.port);
+			if(packet.getLength() > 1) {
 
-			boolean found = false;
-			for(int i = 0 ; i < forwarders.size(); i++) {
-				Forwarder fr = (Forwarder)forwarders.get(i);
-				if(forw.equals(fr)){
-					found = true;
-					fr.timeout = System.currentTimeMillis() + GWParameters.getForwarderTimeout()*1000;
-					break;
-				}				
-			}			
-			if (!found) forwarders.add(forw);
-		
-//			if(packet.getLength() > 3) { // not a keep alive packet
-				byte[] data = new byte[packet.getLength()];
-				System.arraycopy(packet.getData(), packet.getOffset(), data, 0, packet.getLength());
-				
-				//old encaps v1.1
-//				byte[] clAddr = new byte[data[1]];  //data[1] contains length of clAddr (wireless node id)
-//				System.arraycopy(data, 2, clAddr, 0, clAddr.length);
-//				ClientAddress address = new ClientAddress(clAddr, packet.getAddress(), packet.getPort());
-//				byte[] mqttsData = new byte[data.length - clAddr.length - 2];
-//				System.arraycopy(data, clAddr.length + 2, mqttsData, 0, mqttsData.length);
-				//end old encaps v1.1
-				
-				byte[] mqttsData = null;
-				ClientAddress address = null;
-				
-				if (data[0] == (byte)0x00) {  //old encaps v 1.1
-					byte[] clAddr = new byte[data[1]];  //data[1] contains length of clAddr (wireless node id)
-					System.arraycopy(data, 2, clAddr, 0, clAddr.length);
-					byte[] encaps = new byte[data[1]+2];
-					System.arraycopy(data, 0, encaps, 0, encaps.length);
-					address = new ClientAddress(clAddr, packet.getAddress(), packet.getPort(), true, encaps);
-					mqttsData = new byte[data.length - clAddr.length - 2];
-					System.arraycopy(data, clAddr.length + 2, mqttsData, 0, mqttsData.length);
-				} else if (data[1] == (byte)MqttsMessage.ENCAPSMSG) { //new encaps v1.2
-					//we have an encapsulated msg
-					byte[] clAddr = new byte[((int)data[0]&0xFF) - 3];  //data[0]: length of encaps
-					System.arraycopy(data, 3, clAddr, 0, clAddr.length);
-					byte[] encaps = new byte[data[0]];
-					System.arraycopy(data, 0, encaps, 0, encaps.length);
-					address = new ClientAddress(clAddr, packet.getAddress(), packet.getPort(), true, encaps);
-					mqttsData = new byte[(int)data[data[0]]];
-					System.arraycopy(data, data[0], mqttsData, 0, mqttsData.length);
-				} else {
-					//we have a non-encapsulated mqtts msg
-					//we will create an address out of the forwarder address
-					byte[] a1 = packet.getAddress().getAddress();
-					byte[] a2 = new byte[2];
-					a2[0] = (byte)((packet.getPort() >> 8) & 0xFF);
-					a2[1] = (byte) ( packet.getPort() & 0xFF);
-					byte[] clAddr = new byte[a1.length+a2.length];
-					System.arraycopy(a1, 0, clAddr, 0, a1.length);
-					System.arraycopy(a2, 0, clAddr, a1.length, a2.length);
-					address = new ClientAddress(clAddr, packet.getAddress(), packet.getPort(), false, null);
-					mqttsData = new byte[(int)data[0]];
-					System.arraycopy(data, 0, mqttsData, 0, mqttsData.length);
-				}
-				
-				
-//start-just for the testing purposes we simulate here a network delay
-//This will NOT be included in the final version
-//				try {
-//					Thread.sleep(10);
-//				} catch (InterruptedException e) {
-//					// TODO Auto-generated catch block
-//					e.printStackTrace();
-//				}
+        //add the forwarder from which we received the message to the list
+        //if it is already on the list just update its timeout
+        Forwarder forw = new Forwarder();
+        forw.addr = packet.getAddress();
+        forw.port = packet.getPort();
+        forw.timeout = System.currentTimeMillis() + GWParameters.getForwarderTimeout()*1000;
+        //GatewayLogger.log(GatewayLogger.INFO, "UDPClientInterface -  New forwarder:addr = " + forw.addr+ " port = "+forw.port);
 
-				//end
-				decodeMsg(mqttsData,address);
+        boolean found = false;
+        for(int i = 0 ; i < forwarders.size(); i++) {
+          Forwarder fr = (Forwarder)forwarders.get(i);
+          if(forw.equals(fr)){
+            found = true;
+            fr.timeout = System.currentTimeMillis() + GWParameters.getForwarderTimeout()*1000;
+            break;
+          }				
+        }			
+        if (!found) forwarders.add(forw);
+
+        //			if(packet.getLength() > 3) { // not a keep alive packet
+        byte[] data = new byte[packet.getLength()];
+        System.arraycopy(packet.getData(), packet.getOffset(), data, 0, packet.getLength());
+
+        //old encaps v1.1
+        //				byte[] clAddr = new byte[data[1]];  //data[1] contains length of clAddr (wireless node id)
+        //				System.arraycopy(data, 2, clAddr, 0, clAddr.length);
+        //				ClientAddress address = new ClientAddress(clAddr, packet.getAddress(), packet.getPort());
+        //				byte[] mqttsData = new byte[data.length - clAddr.length - 2];
+        //				System.arraycopy(data, clAddr.length + 2, mqttsData, 0, mqttsData.length);
+        //end old encaps v1.1
+
+        byte[] mqttsData = null;
+        ClientAddress address = null;
+
+        if (data[0] == (byte)0x00) {  //old encaps v 1.1
+          byte[] clAddr = new byte[data[1]];  //data[1] contains length of clAddr (wireless node id)
+          System.arraycopy(data, 2, clAddr, 0, clAddr.length);
+          byte[] encaps = new byte[data[1]+2];
+          System.arraycopy(data, 0, encaps, 0, encaps.length);
+          address = new ClientAddress(clAddr, packet.getAddress(), packet.getPort(), true, encaps);
+          mqttsData = new byte[data.length - clAddr.length - 2];
+          System.arraycopy(data, clAddr.length + 2, mqttsData, 0, mqttsData.length);
+        } else if (data[1] == (byte)MqttsMessage.ENCAPSMSG) { //new encaps v1.2
+          //we have an encapsulated msg
+          byte[] clAddr = new byte[((int)data[0]&0xFF) - 3];  //data[0]: length of encaps
+          System.arraycopy(data, 3, clAddr, 0, clAddr.length);
+          byte[] encaps = new byte[data[0]];
+          System.arraycopy(data, 0, encaps, 0, encaps.length);
+          address = new ClientAddress(clAddr, packet.getAddress(), packet.getPort(), true, encaps);
+          mqttsData = new byte[(int)data[data[0]]];
+          System.arraycopy(data, data[0], mqttsData, 0, mqttsData.length);
+        } else {
+          //we have a non-encapsulated mqtts msg
+          //we will create an address out of the forwarder address
+          byte[] a1 = packet.getAddress().getAddress();
+          byte[] a2 = new byte[2];
+          a2[0] = (byte)((packet.getPort() >> 8) & 0xFF);
+          a2[1] = (byte) ( packet.getPort() & 0xFF);
+          byte[] clAddr = new byte[a1.length+a2.length];
+          System.arraycopy(a1, 0, clAddr, 0, a1.length);
+          System.arraycopy(a2, 0, clAddr, a1.length, a2.length);
+          address = new ClientAddress(clAddr, packet.getAddress(), packet.getPort(), false, null);
+          mqttsData = new byte[(int)data[0]];
+          System.arraycopy(data, 0, mqttsData, 0, mqttsData.length);
+        }
+
+
+        //start-just for the testing purposes we simulate here a network delay
+        //This will NOT be included in the final version
+        //				try {
+        //					Thread.sleep(10);
+        //				} catch (InterruptedException e) {
+        //					// TODO Auto-generated catch block
+        //					e.printStackTrace();
+        //				}
+
+        //end
+        decodeMsg(mqttsData,address);
 //			}
-		}catch (IOException ex){
-			ex.printStackTrace();
-			GatewayLogger.log(GatewayLogger.ERROR, "UDPClientInterface - An I/O error occurred while reading from the socket.");
-		}
+      } else {
+        GatewayLogger.log(GatewayLogger.WARNING, "UDPClientInterface - UDP packet with size < 2 recieved");
+      }
+    } catch (IOException ex){
+      ex.printStackTrace();
+      GatewayLogger.log(GatewayLogger.ERROR, "UDPClientInterface - An I/O error occurred while reading from the socket.");
+    } catch (Exception ex){
+      ex.printStackTrace();
+      GatewayLogger.log(GatewayLogger.ERROR, "UDPClientInterface - Unknown error, we continue anyway, since the show must go on.");
+    }
 	}
 
 	/**
@@ -333,7 +341,7 @@ public class UDPClientInterface implements ClientInterface, Runnable {
 			break;
 
 		case MqttsMessage.WILLMSG:
-			if(data.length < 3) {
+			if(data.length < 2) {
 				GatewayLogger.log(GatewayLogger.WARN, "UDPClientInterface - Not a valid Mqtts WILLMSG message. Wrong packet length (length = "+data.length +"). The packet cannot be processed.");
 				return;
 			}
@@ -357,7 +365,7 @@ public class UDPClientInterface implements ClientInterface, Runnable {
 			break;
 
 		case MqttsMessage.PUBLISH:
-			if(data.length < 8) {
+			if(data.length < 7) {
 				GatewayLogger.log(GatewayLogger.WARN, "UDPClientInterface - Not a valid Mqtts PUBLISH message. Wrong packet length (length = "+data.length +"). The packet cannot be processed.");
 				return;
 			}
