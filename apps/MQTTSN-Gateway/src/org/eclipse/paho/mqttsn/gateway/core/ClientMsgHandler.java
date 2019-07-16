@@ -1439,6 +1439,8 @@ public class ClientMsgHandler extends MsgHandler{
 			publish.setMsgId(receivedMsg.getMsgId());
 			publish.setData(receivedMsg.getPayload());
 			GatewayLogger.log(GatewayLogger.INFO, "ClientMsgHandler ["+Utils.hexString(this.clientAddress.getAddress())+"]/["+clientId+"] - Sending Mqtts PUBLISH message with \"QoS\" = \""+receivedMsg.getQos()+ "\" and \"TopicId\" = \"" + receivedMsg.getTopicName() + "\" (short topic name) to the client.");
+			//send the Mqtts PUBLISH message to the client
+			clientInterface.sendMsg(this.clientAddress, publish);
 			return;
 		}
 

@@ -124,11 +124,10 @@ public class MqttsPublish extends MqttsMessage {
 		byteTopicId = new byte[2];
 		if (topicIdType == MqttsMessage.SHORT_TOPIC_NAME)
 			byteTopicId = shortTopicName.getBytes();
-		else if(topicIdType == MqttsMessage.NORMAL_TOPIC_ID){
+		else {
 			byteTopicId[0] = (byte)((topicId >> 8) & 0xFF);
 			byteTopicId[1] = (byte) (topicId & 0xFF);
-		}else 
-				throw new IllegalArgumentException("Unknown topic id type: " + topicIdType);
+		}
 		System.arraycopy(byteTopicId, 0, data, 3, byteTopicId.length);	
 		data[5] = (byte)((msgId >> 8) & 0xFF);
 		data[6] = (byte) (msgId & 0xFF);
