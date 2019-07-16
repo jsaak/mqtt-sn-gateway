@@ -238,7 +238,7 @@ public class UDPClientInterface implements ClientInterface, Runnable {
         decodeMsg(mqttsData,address);
 //			}
       } else {
-        GatewayLogger.log(GatewayLogger.WARNING, "UDPClientInterface - UDP packet with size < 2 recieved");
+        GatewayLogger.log(GatewayLogger.WARN, "UDPClientInterface - UDP packet with size < 2 recieved");
       }
     } catch (IOException ex){
       ex.printStackTrace();
