@@ -55,11 +55,11 @@ public class MqttsConnect extends MqttsMessage{
 		msgType = MqttsMessage.CONNECT;		
 		will = ((data[2] & 0x08) >> 3 != 0);
 		cleanSession = ((data[2] & 0x04) >> 2 !=0);
+		protocolVersion = data[3];
 		duration = ((data[4] & 0xFF) << 8) + (data[5] & 0xFF);
 	
 	//  TODO handle this fields
 		protocolName = "MQIsdp";
-		protocolVersion = 3;
 	
 		byte[] byteClientId = new byte[data[0] - 6];
 		System.arraycopy(data, 6, byteClientId, 0, byteClientId.length);

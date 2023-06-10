@@ -14,9 +14,15 @@ I did not try the MQTT-SN c or java client
 
 ## How to compile
 ```
-   cd apps/MQTTSN-Gateway/src/org/eclipse/paho/mqttsn/gateway && javac -sourcepath ./ -d target/path/ ./**/**/**/**/**/*.java && cd ../../../../../../../..
+   cd apps/MQTTSN-Gateway/src/org/eclipse/paho/mqttsn/gateway && javac -sourcepath ./ -d /target/path/ ./**/**/**/**/**/*.java ; cd ../../../../../../../..
 ```
 there should be a more elegant way, if you know one, let me know, and i will change this
+
+## How to run
+```
+   cd /target/path/ && /usr/bin/java org.eclipse.paho.mqttsn.gateway.Gateway
+   echo -e '\0x0a\0x04\0x04\0x01\0x00\0x660001' | nc -v -u localhost 20000
+```
 
 ## Licensing
 see [notice.html](https://github.com/jsaak/mqtt-sn-gateway/blob/master/notice.html)

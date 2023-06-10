@@ -134,6 +134,7 @@ public class ClientMsgHandler extends MsgHandler{
 	private int msgId;
 	private int topicId;
 
+	private boolean mqttsnExtension = false;
 
 	/**
 	 * Constructor of the ClientMsgHandler.
@@ -339,12 +340,24 @@ public class ClientMsgHandler extends MsgHandler{
 		}
 
 		//if the will flag of the Mqtts CONNECT message is not set, 
+    //  or the protocol version is 17
 		//construct a Mqtt CONNECT message, send it to the broker and return
-		if(!receivedMsg.isWill()){			
+		if(!receivedMsg.isWill() || receivedMsg.getProtocolVersion() == 17){			
 			MqttConnect mqttConnect = new MqttConnect();
-			mqttConnect.setProtocolName(receivedMsg.getProtocolName());
-			mqttConnect.setProtocolVersion (receivedMsg.getProtocolVersion());
-			mqttConnect.setWill (receivedMsg.isWill());	
+
+      //if the protocol version is 17, we use our extension
+      if (receivedMsg.getProtocolVersion() == 17) {
+        this.mqttsnExtension = true;
+        mqttConnect.setWill(true);	
+        mqttConnect.setWillRetain(false);
+        mqttConnect.setWillQoS(1);
+        mqttConnect.setWillTopic("disconnected");
+        mqttConnect.setWillMessage("X");
+      } else {
+        mqttConnect.setWill (receivedMsg.isWill());	
+      }
+      mqttConnect.setProtocolName(receivedMsg.getProtocolName());
+      mqttConnect.setProtocolVersion(3);
 			mqttConnect.setCleanStart (receivedMsg.isCleanSession());
 			mqttConnect.setKeepAlive(receivedMsg.getDuration());
 			mqttConnect.setClientId (receivedMsg.getClientId());
@@ -370,24 +383,25 @@ public class ClientMsgHandler extends MsgHandler{
 
 			//set the state of the client as "Connected"
 			client.setConnected();
-			return;
-		}
 
-		//if the will flag is set, store the received Mqtts CONNECT message, construct a 
-		//Mqtts WILTOPICREQ message, and send it to the client
-		this.mqttsConnect = receivedMsg;
-		MqttsWillTopicReq willTopicReq = new MqttsWillTopicReq();
+      this.mqttsConnect = null; //was missing, i think
+		} else {
+      //if the will flag is set, store the received Mqtts CONNECT message, construct a 
+      //Mqtts WILTOPICREQ message, and send it to the client
+      this.mqttsConnect = receivedMsg;
+      MqttsWillTopicReq willTopicReq = new MqttsWillTopicReq();
 
-		GatewayLogger.log(GatewayLogger.INFO, "ClientMsgHandler ["+Utils.hexString(this.clientAddress.getAddress())+"]/["+clientId+"] - Sending Mqtts WILLTOPICREQ message to the client.");
-		clientInterface.sendMsg(this.clientAddress, willTopicReq);
+      GatewayLogger.log(GatewayLogger.INFO, "ClientMsgHandler ["+Utils.hexString(this.clientAddress.getAddress())+"]/["+clientId+"] - Sending Mqtts WILLTOPICREQ message to the client.");
+      clientInterface.sendMsg(this.clientAddress, willTopicReq);
 
-		//set the gateway on "waitingWillTopic" state and increase 
-		//the tries of sending Mqtts WILLTOPICREQ message to the client
-		gateway.setWaitingWillTopic();
-		gateway.increaseTriesSendingWillTopicReq();
+      //set the gateway on "waitingWillTopic" state and increase 
+      //the tries of sending Mqtts WILLTOPICREQ message to the client
+      gateway.setWaitingWillTopic();
+      gateway.increaseTriesSendingWillTopicReq();
 
-		//set a timeout for waiting a Mqtts WILLTOPIC message from the client by registering to the timer
-		timer.register(this.clientAddress, ControlMessage.WAITING_WILLTOPIC_TIMEOUT, GWParameters.getWaitingTime());
+      //set a timeout for waiting a Mqtts WILLTOPIC message from the client by registering to the timer
+      timer.register(this.clientAddress, ControlMessage.WAITING_WILLTOPIC_TIMEOUT, GWParameters.getWaitingTime());
+    }
 	}
 
 
@@ -465,7 +479,7 @@ public class ClientMsgHandler extends MsgHandler{
 		//populate the Mqtt CONNECT message with the information of the stored Mqtts CONNECT
 		//and WILLTOPIC messages and the information of the received Mqtts WILLMSG message 
 		mqttConnect.setProtocolName(this.mqttsConnect.getProtocolName());
-		mqttConnect.setProtocolVersion (this.mqttsConnect.getProtocolVersion());
+		mqttConnect.setProtocolVersion (3);
 		mqttConnect.setWillRetain (this.mqttsWillTopic.isRetain());
 		mqttConnect.setWillQoS (this.mqttsWillTopic.getQos());
 		mqttConnect.setWill (this.mqttsConnect.isWill());	
@@ -1357,14 +1371,92 @@ public class ClientMsgHandler extends MsgHandler{
 			return;
 		}
 
-		//else construct a Mqtts CONNACK message
-		MqttsConnack msg = new MqttsConnack();
-		msg.setReturnCode(MqttsMessage.RETURN_CODE_ACCEPTED);
+    if (this.mqttsnExtension) {
+      //populate predefined topics
+      String device_id = String.format("%02d",Integer.parseInt(clientId,16)); //device_id in decimal
 
-		//send the Mqtts CONNACK message to the client	
-		GatewayLogger.log(GatewayLogger.INFO, "ClientMsgHandler ["+Utils.hexString(this.clientAddress.getAddress())+"]/["+clientId+"] - Sending Mqtts CONNACK message to the client.");
-		clientInterface.sendMsg(this.clientAddress, msg);	
-	}
+      //register
+      topicIdMappingTable.assignTopicId(1 , device_id + "/status");
+      topicIdMappingTable.assignTopicId(2 , device_id + "/card_read");
+      topicIdMappingTable.assignTopicId(3 , device_id + "/lock");
+      topicIdMappingTable.assignTopicId(4 , device_id + "/move");
+      topicIdMappingTable.assignTopicId(5 , device_id + "/bike_move");
+      topicIdMappingTable.assignTopicId(6 , device_id + "/get_cardkey");
+      topicIdMappingTable.assignTopicId(7 , "00/low_bat");
+      topicIdMappingTable.assignTopicId(8 , "00/key_press");
+      topicIdMappingTable.assignTopicId(9 , "00/bat_val");
+      topicIdMappingTable.assignTopicId(10, device_id + "/bikebat_val");
+
+      //subscribe
+      topicIdMappingTable.assignTopicId(21, device_id + "/cardkey");
+      topicIdMappingTable.assignTopicId(22, device_id + "/modem_reset");
+      topicIdMappingTable.assignTopicId(23, device_id + "/low_battery_threshold");
+      topicIdMappingTable.assignTopicId(24, device_id + "/open");
+      topicIdMappingTable.assignTopicId(25, device_id + "/get_status");
+      topicIdMappingTable.assignTopicId(26, "get_status");
+      topicIdMappingTable.assignTopicId(27, "new_address");
+      topicIdMappingTable.assignTopicId(28, device_id + "/buzzer");
+      topicIdMappingTable.assignTopicId(29, device_id + "/fw_update");
+      topicIdMappingTable.assignTopicId(30, device_id + "/debug");
+      topicIdMappingTable.assignTopicId(31, device_id + "/charge");
+
+      char device_byte;
+      int device_int = Integer.parseInt(clientId,16);
+      if (device_int >= 10) {
+        device_byte = (char) (device_int + 87);
+      } else {
+        device_byte = (char) (device_int + 48);
+      }
+      topicIdMappingTable.assignTopicId(30, "p"+device_byte); //QoS 0
+
+      //subscribe
+      MqttSubscribe mqttSubscribe = new MqttSubscribe(); 
+      mqttSubscribe.multipleTopicName = new String[] {device_id + "cardkey", 
+                                                      device_id + "/modem_reset",
+                                                      device_id + "/low_battery_threshold",
+                                                      device_id + "/open",
+                                                      "get_status",
+                                                      "new_address",
+                                                      device_id + "/buzzer",
+                                                      device_id + "/fw_update",
+                                                      device_id + "/debug",
+                                                      "p"+device_byte };
+      mqttSubscribe.multipleRequestedQoS = new int[] {2,2,2,2,2,2,2,2,2,0};
+
+      //TODO
+      //mqttSubscribe.multipleTopicName = new String[] {"XXXXX"};
+      //mqttSubscribe.multipleRequestedQoS = new int[] {2};
+
+      //???
+      //store the received Mqtts SUBSCRIBE message (for handling Mqtt SUBACK from the broker)
+      //this.mqttsSubscribe = receivedMsg;
+      //mqttSubscribe.setDup(receivedMsg.isDup());
+      mqttSubscribe.setMsgId(0xffff);
+
+      GatewayLogger.log(GatewayLogger.INFO, "ClientMsgHandler ["+Utils.hexString(this.clientAddress.getAddress())+"]/["+clientId+"] - Sending Mqtt SUBSCRIBE message with all the topics to the broker." + Utils.hexString(mqttSubscribe.toBytes()));
+      //send the Mqtt SUBSCRIBE message to the broker
+      try {
+        brokerInterface.sendMsg(mqttSubscribe);
+      } catch (MqttsException e) {
+        e.printStackTrace();
+        //if failed sending the message
+        GatewayLogger.log(GatewayLogger.ERROR, "ClientMsgHandler ["+Utils.hexString(this.clientAddress.getAddress())+"]/["+clientId+"] - Failed sending Mqtt SUBSCRIBE message to the broker.");
+        connectionLost();
+        return;
+      }
+
+      //set the gateway on "waitingSuback" state 
+      gateway.setWaitingSuback();
+    } else {
+      //else construct a Mqtts CONNACK message
+      MqttsConnack msg = new MqttsConnack();
+      msg.setReturnCode(MqttsMessage.RETURN_CODE_ACCEPTED);
+
+      //send the Mqtts CONNACK message to the client	
+      GatewayLogger.log(GatewayLogger.INFO, "ClientMsgHandler ["+Utils.hexString(this.clientAddress.getAddress())+"]/["+clientId+"] - Sending Mqtts CONNACK message to the client.");
+      clientInterface.sendMsg(this.clientAddress, msg);	
+    }
+  }
 
 
 	/**
@@ -1655,6 +1747,21 @@ public class ClientMsgHandler extends MsgHandler{
 		if(!gateway.isWaitingSuback()){
 			GatewayLogger.log(GatewayLogger.WARN, "ClientMsgHandler ["+Utils.hexString(this.clientAddress.getAddress())+"]/["+clientId+"] - Gateway is not waiting a Mqtt SUBACK message from the broker. The received message cannot be processed.");
 			return;
+		}
+
+    if (mqttsnExtension) {
+      //TODO handle message_id
+      //TODO handle return_code
+			gateway.resetWaitingSuback();
+
+      //construct a Mqtts CONNACK message
+      MqttsConnack msg = new MqttsConnack();
+      msg.setReturnCode(MqttsMessage.RETURN_CODE_ACCEPTED);
+
+      //send the Mqtts CONNACK message to the client	
+      GatewayLogger.log(GatewayLogger.INFO, "ClientMsgHandler ["+Utils.hexString(this.clientAddress.getAddress())+"]/["+clientId+"] - Sending Mqtts CONNACK message to the client.");
+      clientInterface.sendMsg(this.clientAddress, msg);	
+      return;
 		}
 
 		//else, assure that the stored Mqtts SUBSCRIBE is not null (debugging checks)

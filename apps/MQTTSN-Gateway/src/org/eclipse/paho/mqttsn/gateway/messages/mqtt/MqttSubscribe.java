@@ -32,12 +32,15 @@ public class MqttSubscribe extends MqttMessage{
 	public String topicName;//supports only one topic name at the time (as mqtts) not an array
 	public int	requestedQoS;
 
+	public String[] multipleTopicName;
+	public int[] multipleRequestedQoS;
 
 	/**
 	 * MqttSubscribe constructor.Sets the appropriate message type. 
 	 */
 	public MqttSubscribe() {
 		msgType = MqttMessage.SUBSCRIBE;
+    multipleTopicName = null;
 	}
 
 	/**
@@ -54,18 +57,42 @@ public class MqttSubscribe extends MqttMessage{
 	 * @return A byte array containing the SUBSCRIBE message as it should appear on the wire.
 	 */
 	public byte[] toBytes() {
-		int length = topicName.length() + 6;//1st byte plus 2 bytes for utf encoding, 2 for msgId and 1 for requested qos
-		byte[] data = new byte[length];
-		data [0] = (byte)((msgType << 4) & 0xF0);	
-		data [0] |= 0x02; //insert qos = 1
-		data [1] = (byte)((msgId >> 8) & 0xFF);
-		data [2] = (byte) (msgId & 0xFF);
+    if (multipleTopicName != null) {
+      int payload_length = 0;
+      for (int i=0; i<multipleTopicName.length; i++) {
+				payload_length += Utils.StringToUTF(multipleTopicName[i]).length;
+        payload_length += 1;  //QoS field
+      }
 
-		byte[] utfEncodedTopicName = Utils.StringToUTF(topicName);
-		System.arraycopy(utfEncodedTopicName, 0, data, 3, utfEncodedTopicName.length);
-		data[length-1] = (byte)(requestedQoS);//insert requested qos
-		data = encodeMsgLength(data);	// add Remaining Length field
-		return data;
+      byte[] data = new byte[payload_length+3];
+      data[0] = (byte)((msgType << 4) & 0xF0);	
+      data[0] |= 0x02; //insert qos = 1
+      data[1] = (byte)((msgId >> 8) & 0xFF);
+      data[2] = (byte) (msgId & 0xFF);
+
+      int index = 0;
+      for (int i=0; i<multipleTopicName.length; i++) {
+        byte[] utfEncodedTopicName = Utils.StringToUTF(multipleTopicName[i]);
+        System.arraycopy(utfEncodedTopicName, 0, data, 3+index, utfEncodedTopicName.length);
+        data[index+3+utfEncodedTopicName.length] = (byte)(multipleRequestedQoS[i]);
+        index += utfEncodedTopicName.length + 1;
+      }
+      data = encodeMsgLength(data);	// add Remaining Length field
+      return data;
+    } else {
+      int length = topicName.length() + 6;//1st byte plus 2 bytes for utf encoding, 2 for msgId and 1 for requested qos
+      byte[] data = new byte[length];
+      data [0] = (byte)((msgType << 4) & 0xF0);	
+      data [0] |= 0x02; //insert qos = 1
+      data [1] = (byte)((msgId >> 8) & 0xFF);
+      data [2] = (byte) (msgId & 0xFF);
+
+      byte[] utfEncodedTopicName = Utils.StringToUTF(topicName);
+      System.arraycopy(utfEncodedTopicName, 0, data, 3, utfEncodedTopicName.length);
+      data[length-1] = (byte)(requestedQoS);//insert requested qos
+      data = encodeMsgLength(data);	// add Remaining Length field
+      return data;
+    }
 	}
 
 	public String getTopicName() {
