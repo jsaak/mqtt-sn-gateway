@@ -1377,27 +1377,27 @@ public class ClientMsgHandler extends MsgHandler{
       String device_id = String.format("%02d",Integer.parseInt(clientId,16)); //device_id in decimal
 
       //register
-      topicIdMappingTable.assignTopicId(1 , device_id + "/status");
-      topicIdMappingTable.assignTopicId(2 , device_id + "/card_read");
-      topicIdMappingTable.assignTopicId(3 , device_id + "/lock");
-      topicIdMappingTable.assignTopicId(4 , device_id + "/move");
-      topicIdMappingTable.assignTopicId(5 , device_id + "/bike_move");
-      topicIdMappingTable.assignTopicId(6 , device_id + "/get_cardkey");
-      topicIdMappingTable.assignTopicId(8 , "00/key_press");
-      topicIdMappingTable.assignTopicId(9 , "00/bat_val");
-      topicIdMappingTable.assignTopicId(10, device_id + "/bikebat_val");
+      topicIdMappingTable.assignTopicId(11 , device_id + "/status");
+      topicIdMappingTable.assignTopicId(12 , device_id + "/card_read");
+      topicIdMappingTable.assignTopicId(13 , device_id + "/lock");
+      topicIdMappingTable.assignTopicId(14 , device_id + "/move");
+      topicIdMappingTable.assignTopicId(15 , device_id + "/bike_move");
+      topicIdMappingTable.assignTopicId(16 , device_id + "/get_cardkey");
+      topicIdMappingTable.assignTopicId(18 , "00/key_press");
+      topicIdMappingTable.assignTopicId(19 , "00/bat_val");
+      topicIdMappingTable.assignTopicId(20, device_id + "/bikebat_val");
 
       //subscribe
-      topicIdMappingTable.assignTopicId(21, device_id + "/cardkey");
-      topicIdMappingTable.assignTopicId(22, device_id + "/modem_reset");
-      topicIdMappingTable.assignTopicId(24, device_id + "/open");
-      topicIdMappingTable.assignTopicId(25, device_id + "/get_status");
-      topicIdMappingTable.assignTopicId(26, "get_status");
-      topicIdMappingTable.assignTopicId(27, "new_address");
-      topicIdMappingTable.assignTopicId(28, device_id + "/buzzer");
-      topicIdMappingTable.assignTopicId(29, device_id + "/fw_update");
-      topicIdMappingTable.assignTopicId(30, device_id + "/debug");
-      topicIdMappingTable.assignTopicId(31, device_id + "/charge");
+      topicIdMappingTable.assignTopicId(41, device_id + "/cardkey");
+      topicIdMappingTable.assignTopicId(42, device_id + "/modem_reset");
+      topicIdMappingTable.assignTopicId(44, device_id + "/open");
+      topicIdMappingTable.assignTopicId(45, device_id + "/get_status");
+      topicIdMappingTable.assignTopicId(46, "get_status");
+      topicIdMappingTable.assignTopicId(47, "new_address");
+      topicIdMappingTable.assignTopicId(48, device_id + "/buzzer");
+      topicIdMappingTable.assignTopicId(49, device_id + "/fw_update");
+      topicIdMappingTable.assignTopicId(50, device_id + "/debug");
+      topicIdMappingTable.assignTopicId(51, device_id + "/charge");
 
       //subscribe to short topic p + device_byte
       char device_byte;
