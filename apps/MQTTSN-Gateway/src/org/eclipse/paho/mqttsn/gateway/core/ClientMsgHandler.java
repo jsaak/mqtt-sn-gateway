@@ -323,8 +323,11 @@ public class ClientMsgHandler extends MsgHandler{
 		this.clientId = receivedMsg.getClientId();
 		brokerInterface.setClientId(clientId);
 
-		//if the client is already connected return a Mqtts CONNACK 
-		if(client.isConnected()){
+    boolean protocol_17 = (receivedMsg.getProtocolVersion() == 17);
+    boolean protocol_changed = protocol_17 ^ this.mqttsnExtension; // xor
+
+		//if the client is already connected, and protocol is not changed return a Mqtts CONNACK 
+		if(client.isConnected() && (!protocol_changed)) {
 			GatewayLogger.log(GatewayLogger.WARN, "ClientMsgHandler ["+Utils.hexString(this.clientAddress.getAddress())+"]/["+clientId+"] - Client is already connected. Mqtts CONNACK message will be send to the client.");
 			MqttsConnack connack = new MqttsConnack();
 			connack.setReturnCode(MqttsMessage.RETURN_CODE_ACCEPTED);
@@ -333,7 +336,7 @@ public class ClientMsgHandler extends MsgHandler{
 			return;
 		}
 
-		//if the gateway is already in process of establishing a connection with the client, drop the message 
+		//if the gateway is already in the process of establishing a connection with the client, drop the message 
 		if(gateway.isEstablishingConnection()){
 			GatewayLogger.log(GatewayLogger.WARN, "ClientMsgHandler ["+Utils.hexString(this.clientAddress.getAddress())+"]/["+clientId+"] - Client is already establishing a connection. The received Mqtts CONNECT message cannot be processed.");
 			return;
@@ -342,11 +345,11 @@ public class ClientMsgHandler extends MsgHandler{
 		//if the will flag of the Mqtts CONNECT message is not set, 
     //  or the protocol version is 17
 		//construct a Mqtt CONNECT message, send it to the broker and return
-		if(!receivedMsg.isWill() || receivedMsg.getProtocolVersion() == 17){			
+		if(!receivedMsg.isWill() || protocol_17){			
 			MqttConnect mqttConnect = new MqttConnect();
 
       //if the protocol version is 17, we use our extension
-      if (receivedMsg.getProtocolVersion() == 17) {
+      if (protocol_17) {
         this.mqttsnExtension = true;
         mqttConnect.setWill(true);	
         mqttConnect.setWillRetain(false);
