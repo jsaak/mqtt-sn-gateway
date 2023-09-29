@@ -1379,6 +1379,8 @@ public class ClientMsgHandler extends MsgHandler{
       //populate predefined topics
       String device_id = String.format("%02d",Integer.parseInt(clientId,16)); //device_id in decimal
 
+      topicIdMappingTable.clear();
+
       //register
       topicIdMappingTable.assignTopicId(11 , device_id + "/status");
       topicIdMappingTable.assignTopicId(12 , device_id + "/card_read");

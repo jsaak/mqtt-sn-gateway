@@ -43,6 +43,10 @@ public class TopicMappingTable {
 		}
 	}
 
+	public void clear() {
+    topicIdTable.clear();
+  }
+
 	/**
 	 * @param topicId
 	 * @param topicName
