@@ -326,6 +326,12 @@ public class ClientMsgHandler extends MsgHandler{
     boolean protocol_17 = (receivedMsg.getProtocolVersion() == 17);
     boolean protocol_changed = protocol_17 ^ this.mqttsnExtension; // xor
 
+    //for downgrade, forget all topics except from the file
+    if (protocol_changed && !protocol_17) {
+      topicIdMappingTable.clear();
+      topicIdMappingTable.initialize();
+    }
+
 		//if the client is already connected, and protocol is not changed return a Mqtts CONNACK 
 		if(client.isConnected() && (!protocol_changed)) {
 			GatewayLogger.log(GatewayLogger.WARN, "ClientMsgHandler ["+Utils.hexString(this.clientAddress.getAddress())+"]/["+clientId+"] - Client is already connected. Mqtts CONNACK message will be send to the client.");
@@ -1427,10 +1433,6 @@ public class ClientMsgHandler extends MsgHandler{
                                                       device_id + "/charge",
                                                       "p"+device_byte };
       mqttSubscribe.multipleRequestedQoS = new int[] {2,2,2,2,2,2,2,2,2,2,0};
-
-      //TODO
-      //mqttSubscribe.multipleTopicName = new String[] {"XXXXX"};
-      //mqttSubscribe.multipleRequestedQoS = new int[] {2};
 
       //???
       //store the received Mqtts SUBSCRIBE message (for handling Mqtt SUBACK from the broker)
