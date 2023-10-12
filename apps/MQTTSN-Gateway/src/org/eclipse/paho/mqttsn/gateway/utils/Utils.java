@@ -39,8 +39,8 @@ public class Utils {
 			byte[] utfBytes = data.getBytes(STRING_ENCODING);
 			byte[] retArray = new byte[utfBytes.length+2];
 				
-			retArray[0] = new Integer(utfBytes.length/256).byteValue();
-			retArray[1] = new Integer(utfBytes.length%256).byteValue();
+			retArray[0] = Integer.valueOf(utfBytes.length/256).byteValue();
+			retArray[1] = Integer.valueOf(utfBytes.length%256).byteValue();
 				
 			System.arraycopy( utfBytes, 0, retArray, 2, utfBytes.length);
 			return (retArray);  

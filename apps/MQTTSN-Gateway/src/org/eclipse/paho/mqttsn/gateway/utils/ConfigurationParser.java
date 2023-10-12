@@ -103,7 +103,7 @@ public class ConfigurationParser {
 			Hashtable<Integer, String> table = new Hashtable<Integer, String>(); 
 			while (iter.hasNext()) {
 				try{
-					Integer topicId = new Integer((String)iter.next());	
+					Integer topicId = Integer.valueOf((String)iter.next());
 					String topicName = (String)iterVal.next();
 					if(topicId.intValue() > 0 && topicId.intValue() <= GWParameters.getPredfTopicIdSize() && !table.containsValue(topicName)){
 						table.put(topicId, topicName);

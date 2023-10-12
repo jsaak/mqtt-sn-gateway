@@ -52,11 +52,11 @@ public class TopicMappingTable {
 	 * @param topicName
 	 */
 	public void assignTopicId(int topicId, String topicName) {
-		topicIdTable.put(new Integer (topicId), topicName);
+		topicIdTable.put(Integer.valueOf(topicId), topicName);
 	}
 
 	public String getTopicName(int topicId) {
-		return (String)topicIdTable.get(new Integer(topicId));
+		return (String)topicIdTable.get(Integer.valueOf(topicId));
 	}
 
 	/**
@@ -66,7 +66,7 @@ public class TopicMappingTable {
 	public int getTopicId(String topicName) {
 		Iterator<Integer> iter = topicIdTable.keySet().iterator();
 		Iterator<String> iterVal = topicIdTable.values().iterator();
-		Integer ret = new Integer(0);
+		Integer ret = Integer.valueOf(0);
 		while (iter.hasNext()) {
 			Integer topicId = (Integer)iter.next();			
 			String tname = (String)(iterVal.next());
@@ -82,7 +82,7 @@ public class TopicMappingTable {
 	 * @param topicId
 	 */
 	public void removeTopicId(int topicId) {
-		topicIdTable.remove(new Integer(topicId));		
+		topicIdTable.remove(Integer.valueOf(topicId));
 	}
 
 
