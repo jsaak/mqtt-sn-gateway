@@ -18,6 +18,7 @@ package org.eclipse.paho.mqttsn.gateway.core;
 
 import java.util.StringTokenizer;
 import java.util.Vector;
+import java.lang.reflect.InvocationTargetException;
 
 import org.eclipse.paho.mqttsn.gateway.broker.tcp.TCPBrokerInterface;
 import org.eclipse.paho.mqttsn.gateway.client.ClientInterface;
@@ -450,7 +451,7 @@ public class GatewayMsgHandler extends MsgHandler{
 			ClientInterface inter = null;
 			try {				
 				Class<?> cl = Class.forName(clInte);
-				inter = (ClientInterface)cl.newInstance();
+				inter = (ClientInterface)cl.getDeclaredConstructor().newInstance();
 				inter.initialize();
 				GatewayLogger.info("GatewayMsgHandler ["+Utils.hexString(GWParameters.getGatewayAddress().getAddress())+"]/["+clientId+"] - "+inter.getClass().getName()+ " initialized.");
 				clientInterfacesVector.add(inter);
@@ -462,6 +463,12 @@ public class GatewayMsgHandler extends MsgHandler{
 				GatewayLogger.warn("GatewayMsgHandler ["+Utils.hexString(GWParameters.getGatewayAddress().getAddress())+"]/["+clientId+"] - Failed to instantiate "+clInte+".");
 				e.printStackTrace();
 			}catch (ClassNotFoundException e) {
+				GatewayLogger.warn("GatewayMsgHandler ["+Utils.hexString(GWParameters.getGatewayAddress().getAddress())+"]/["+clientId+"] - Failed to instantiate "+clInte+".");
+				e.printStackTrace();
+			}catch (NoSuchMethodException e) {
+				GatewayLogger.warn("GatewayMsgHandler ["+Utils.hexString(GWParameters.getGatewayAddress().getAddress())+"]/["+clientId+"] - Failed to instantiate "+clInte+".");
+				e.printStackTrace();
+			}catch (InvocationTargetException e) {
 				GatewayLogger.warn("GatewayMsgHandler ["+Utils.hexString(GWParameters.getGatewayAddress().getAddress())+"]/["+clientId+"] - Failed to instantiate "+clInte+".");
 				e.printStackTrace();
 			}catch (MqttsException e) {

@@ -328,6 +328,7 @@ public class ClientMsgHandler extends MsgHandler{
 
     //for downgrade, forget all topics except from the file
     if (protocol_changed && !protocol_17) {
+      this.mqttsnExtension = false;
       topicIdMappingTable.clear();
       topicIdMappingTable.initialize();
     }
